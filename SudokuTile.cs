@@ -13,14 +13,19 @@ namespace Sudoku
 {
     public partial class SudokuTile : UserControl
     {
+        #region Fields
         private SudokuViewModel viewModel;
         private int tile;
+        #endregion
 
+        #region Ctor/dtor
         public SudokuTile()
         {
             InitializeComponent();
         }
+        #endregion
 
+        #region Methods
         internal void Init(SudokuViewModel viewModel, int tile)
         {
             this.viewModel = viewModel;
@@ -46,14 +51,15 @@ namespace Sudoku
             this.label9.Tag = cells[8];
             this.label9.Text = cells[8].Value.ToString();
 
-            this.viewModel.SelectedCellChanged += this.SelectedCellChanged;
+            this.viewModel.PropertyChanged += this.ViewModel_PropertyChanged;
 
             foreach (var cell in cells)
             {
-                cell.ValueChanged += this.CellValueChanged;
+                cell.PropertyChanged += this.Cell_PropertyChanged;
             }
 
             this.UpdateSelection();
+            this.UpdateInvalidCells();
         }
 
         private void UpdateSelection()
@@ -71,27 +77,52 @@ namespace Sudoku
             }
         }
 
-        private void SelectedCellChanged(object sender, EventArgs e) => this.UpdateSelection();
-
-        private void CellValueChanged(object sender, EventArgs e)
+        private void UpdateInvalidCells()
         {
-            if (!(sender is SudokuCell cell))
-                return;
-            foreach (var item in tableLayoutPanel1.Controls.OfType<Label>())
+            foreach (var lbl in this.tableLayoutPanel1.Controls.OfType<Label>())
             {
-                if (item.Tag == sender)
+                if (this.viewModel.InvalidCells.Contains(lbl.Tag))
                 {
-                    item.Text = cell.Value.ToString();
+                    lbl.ForeColor = Color.Firebrick;
                 }
+                else
+                {
+                    lbl.ForeColor = SystemColors.ControlText;
+                }
+            }
+        }
+        #endregion
+
+        #region Event handlers
+        private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (sender != this.viewModel)
+                return;
+            else if(e.PropertyName == nameof(this.viewModel.SelectedCell))
+            {
+                this.UpdateSelection();
+            }
+            else if(e.PropertyName == nameof(this.viewModel.InvalidCells))
+            {
+                this.UpdateInvalidCells();
+            }
+        }
+
+        private void Cell_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (!(sender is SudokuCell cell) || e.PropertyName != nameof(cell.Value))
+                return;
+            foreach (var item in tableLayoutPanel1.Controls.OfType<Label>().Where(item => item.Tag == sender))
+            {
+                item.Text = cell.Value.ToString();
             }
         }
 
         private void label_MouseClick(object sender, MouseEventArgs e)
         {
-            if (sender is Label lbl)
+            if (sender is Label lbl && lbl.Tag is SudokuCell cell)
             {
-                Debug.Assert(lbl.Tag is SudokuCell);
-                this.viewModel.SelectedCell = lbl.Tag as SudokuCell;
+                this.viewModel.SelectedCell = cell;
             }
         }
 
@@ -129,40 +160,40 @@ namespace Sudoku
                     break;
                 // values
                 case Keys.D1:
+                case Keys.NumPad1:
+                    this.viewModel.SelectedCell.Value = '1';
                     break;
                 case Keys.D2:
+                case Keys.NumPad2:
+                    this.viewModel.SelectedCell.Value = '2';
                     break;
                 case Keys.D3:
+                case Keys.NumPad3:
+                    this.viewModel.SelectedCell.Value = '3';
                     break;
                 case Keys.D4:
+                case Keys.NumPad4:
+                    this.viewModel.SelectedCell.Value = '4';
                     break;
                 case Keys.D5:
+                case Keys.NumPad5:
+                    this.viewModel.SelectedCell.Value = '5';
                     break;
                 case Keys.D6:
+                case Keys.NumPad6:
+                    this.viewModel.SelectedCell.Value = '6';
                     break;
                 case Keys.D7:
+                case Keys.NumPad7:
+                    this.viewModel.SelectedCell.Value = '7';
                     break;
                 case Keys.D8:
+                case Keys.NumPad8:
+                    this.viewModel.SelectedCell.Value = '8';
                     break;
                 case Keys.D9:
-                    break;
-                case Keys.NumPad1:
-                    break;
-                case Keys.NumPad2:
-                    break;
-                case Keys.NumPad3:
-                    break;
-                case Keys.NumPad4:
-                    break;
-                case Keys.NumPad5:
-                    break;
-                case Keys.NumPad6:
-                    break;
-                case Keys.NumPad7:
-                    break;
-                case Keys.NumPad8:
-                    break;
                 case Keys.NumPad9:
+                    this.viewModel.SelectedCell.Value = '9';
                     break;
                 // clear value
                 case Keys.D0:
@@ -174,5 +205,6 @@ namespace Sudoku
                     break;
             }
         }
+        #endregion
     }
 }

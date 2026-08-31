@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Sudoku
 {
-    public class SudokuCell
+    public class SudokuCell : INotifyPropertyChanged
     {
         #region Fields
         private char value;
@@ -24,14 +25,14 @@ namespace Sudoku
                 if (this.value != value)
                 {
                     this.value = value;
-                    this.ValueChanged?.Invoke(this, EventArgs.Empty);
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Value)));
                 }
             }
         }
         #endregion
 
         #region Events
-        public EventHandler ValueChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
         #endregion
 
         #region Ctor/dtor

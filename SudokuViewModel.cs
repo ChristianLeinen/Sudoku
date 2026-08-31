@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,9 +8,11 @@ using System.Windows.Forms;
 
 namespace Sudoku
 {
-    public class SudokuViewModel
+    public class SudokuViewModel : INotifyPropertyChanged
     {
+        #region Fields
         private SudokuCell selectedCell;
+        #endregion
 
         #region Properties
         public SudokuBoard Board { get; } = new SudokuBoard();
@@ -21,14 +24,16 @@ namespace Sudoku
                 if (this.selectedCell != value)
                 {
                     this.selectedCell = value;
-                    this.SelectedCellChanged?.Invoke(value, EventArgs.Empty);
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.SelectedCell)));
                 }
             }
         }
+
+        public IEnumerable<SudokuCell> InvalidCells { get; private set; } = Enumerable.Empty<SudokuCell>();
         #endregion
 
         #region Events
-        public EventHandler SelectedCellChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
         #endregion
 
         #region Ctor/dtor
@@ -36,6 +41,15 @@ namespace Sudoku
         {
             this.Board.Init(Program.SEED);
             this.SelectedCell = this.Board.GetCell(0, 0);
+
+            this.Board.CellValueChanged += Board_CellValueChanged;
+            this.SelectedCell.Value = '9';
+        }
+
+        private void Board_CellValueChanged(object sender, CellValueChangedEventArgs e)
+        {
+            this.InvalidCells = this.Board.GetInvalidCells().ToArray();
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.InvalidCells)));
         }
         #endregion
 

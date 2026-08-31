@@ -10,6 +10,17 @@ using System.Windows.Forms;
 
 namespace Sudoku
 {
+    public class CellValueChangedEventArgs : EventArgs
+    {
+        public SudokuCell Cell { get; }
+        internal CellValueChangedEventArgs(SudokuCell cell)
+        {
+            this.Cell = cell;
+        }
+    }
+
+    public delegate void CellValueChangedEventHandler(object sender, CellValueChangedEventArgs e);
+
     public class SudokuBoard
     {
         #region constants
@@ -29,12 +40,15 @@ namespace Sudoku
         }
         #endregion
 
+        public event CellValueChangedEventHandler CellValueChanged;
+
         #region Ctor/dtor
         internal SudokuBoard()
         {
             for (int i = 0; i < SIZE * SIZE; ++i)
             {
                 this.cells[i] = new SudokuCell(i / SIZE, i % SIZE);
+                this.cells[i].PropertyChanged += (sender, e) => this.CellValueChanged?.Invoke(this, new CellValueChangedEventArgs(sender as SudokuCell));
             }
 
             //for (int row = 0; row < SIZE; ++row)
@@ -91,13 +105,40 @@ namespace Sudoku
         #endregion
 
         #region Public access methods
-        public SudokuCell GetCell(int row, int col) => this.cells[row *  SIZE + col];
+        public SudokuCell GetCell(int row, int col) => this.cells[row * SIZE + col];
 
         public IEnumerable<SudokuCell> GetRow(int row) => this.cells.Where(cell => cell.Row == row);
 
         public IEnumerable<SudokuCell> GetColumn(int col) => this.cells.Where(cell => cell.Col == col);
 
         public IEnumerable<SudokuCell> GetTile(int tile) => this.cells.Where(cell => cell.Tile == tile);
+
+        public IEnumerable<SudokuCell> GetEmptyCells() => this.cells.Where(cell => cell.Value == EMPTY);
+
+        public IEnumerable<SudokuCell> GetInvalidCells()
+        {
+            // group all non-empty cells by row and value
+            // select those, that have more than one occurence
+            var invalidRows = from cell in this.cells
+                              where cell.Value != EMPTY
+                              group cell by new { cell.Row, cell.Value } into g
+                              where g.Count() > 1
+                              select g;
+
+            var invalidColumns = from cell in this.cells
+                                 where cell.Value != EMPTY
+                                 group cell by new { cell.Col, cell.Value } into g
+                                 where g.Count() > 1
+                                 select g;
+
+            var invalidTiles = from cell in this.cells
+                               where cell.Value != EMPTY
+                               group cell by new { cell.Tile, cell.Value } into g
+                               where g.Count() > 1
+                               select g;
+
+            return invalidRows.SelectMany(item => item.AsEnumerable()).Concat(invalidColumns.SelectMany(item => item.AsEnumerable())).Concat(invalidTiles.SelectMany(item => item.AsEnumerable())).Distinct();
+        }
         #endregion
 
         #region Public check methods
@@ -110,15 +151,14 @@ namespace Sudoku
         /// <returns>True if the given set of values does not contain duplicates (other than empty).</returns>
         public static bool IsValid(IEnumerable<char> values)
         {
-            // indices are zero-based, but values are not!
-            var valueSeen = new bool[SIZE + 1];
+            var valueSeen = new bool[SIZE];
             foreach (var item in values)
             {
                 if (item == EMPTY)
                     continue;
-                else if (valueSeen[item - '0'])
+                else if (valueSeen[item - '1'])
                     return false;
-                valueSeen[item] = true;
+                valueSeen[item - '1'] = true;
             }
             return true;
         }
