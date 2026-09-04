@@ -68,11 +68,15 @@ namespace Sudoku
             {
                 if (lbl.Tag == this.viewModel.SelectedCell)
                 {
-                    lbl.BackColor = SystemColors.ActiveCaption;
+                    lbl.BackColor = SystemColors.GradientInactiveCaption;
+                }
+                else if(Properties.Settings.Default.HighlightSelection && lbl.Tag is SudokuCell cell && (cell.Row == this.viewModel.SelectedCell.Row || cell.Col == this.viewModel.SelectedCell.Col))
+                {
+                    lbl.BackColor = SystemColors.Info;
                 }
                 else
                 {
-                    lbl.BackColor = SystemColors.Control;
+                    lbl.BackColor = SystemColors.Window;
                 }
             }
         }
@@ -81,7 +85,7 @@ namespace Sudoku
         {
             foreach (var lbl in this.tableLayoutPanel1.Controls.OfType<Label>())
             {
-                if (this.viewModel.InvalidCells.Contains(lbl.Tag))
+                if (Properties.Settings.Default.HighlightConflicts && this.viewModel.InvalidCells.Contains(lbl.Tag))
                 {
                     lbl.ForeColor = Color.Firebrick;
                 }
