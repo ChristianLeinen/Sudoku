@@ -28,7 +28,7 @@ namespace Sudoku
         #endregion
 
         #region Fields
-        private SudokuCell[] cells = new SudokuCell[SIZE * SIZE];
+        private readonly SudokuCell[] cells = new SudokuCell[SIZE * SIZE];
         #endregion
 
         #region Properties
@@ -39,7 +39,14 @@ namespace Sudoku
         }
         #endregion
 
+        #region Events
         public event CellValueChangedEventHandler CellValueChanged;
+
+        private void OnCellValueChanged(SudokuCell cell)
+        {
+            this.CellValueChanged?.Invoke(this, new CellValueChangedEventArgs(cell));
+        }
+        #endregion
 
         #region Ctor/dtor
         internal SudokuBoard()
@@ -47,16 +54,8 @@ namespace Sudoku
             for (int i = 0; i < SIZE * SIZE; ++i)
             {
                 this.cells[i] = new SudokuCell(i / SIZE, i % SIZE);
-                this.cells[i].PropertyChanged += (sender, e) => this.CellValueChanged?.Invoke(this, new CellValueChangedEventArgs(sender as SudokuCell));
+                this.cells[i].PropertyChanged += (sender, e) => this.OnCellValueChanged(sender as SudokuCell);
             }
-
-            //for (int row = 0; row < SIZE; ++row)
-            //{
-            //    for (int col = 0; col < SIZE; ++col)
-            //    {
-            //        this.cells[row * SIZE + col] = new Cell(row, col);
-            //    }
-            //}
         }
 
         public void Init(string s)
@@ -84,6 +83,7 @@ namespace Sudoku
         // 345678912
         // 678912345
         // 912345678
+        [Obsolete]
         public static SudokuBoard FromString(string s)
         {
             var board = new SudokuBoard();
@@ -100,6 +100,25 @@ namespace Sudoku
             //    }
             //}
             return board;
+        }
+        #endregion
+
+        #region Updating
+        public void BeginUpdate()
+        {
+            foreach (var cell in this.cells)
+            {
+                cell.IsUpdating = true;
+            }
+        }
+
+        public void EndUpdate()
+        {
+            foreach (var cell in this.cells)
+            {
+                cell.IsUpdating = false;
+            }
+            this.OnCellValueChanged(null);
         }
         #endregion
 
@@ -148,6 +167,7 @@ namespace Sudoku
         /// </summary>
         /// <param name="values">A set of values of either a row, column or tile to be checked for validity.</param>
         /// <returns>True if the given set of values does not contain duplicates (other than empty).</returns>
+        [Obsolete("Use the non-static function instead!", true)]
         public static bool IsValid(IEnumerable<char> values)
         {
             var duplicates = from cell in values

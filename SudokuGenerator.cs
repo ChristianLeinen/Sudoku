@@ -9,6 +9,7 @@ namespace Sudoku
 {
     internal class SudokuGenerator
     {
+        [Obsolete]
         public static SudokuBoard Generate()
         {
             var board = new SudokuBoard();

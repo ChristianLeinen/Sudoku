@@ -33,23 +33,14 @@ namespace Sudoku
 
             var cells = viewModel.Board.GetTile(tile).ToArray();
             this.label1.Tag = cells[0];
-            this.label1.Text = cells[0].Value.ToString();
             this.label2.Tag = cells[1];
-            this.label2.Text = cells[1].Value.ToString();
             this.label3.Tag = cells[2];
-            this.label3.Text = cells[2].Value.ToString();
             this.label4.Tag = cells[3];
-            this.label4.Text = cells[3].Value.ToString();
             this.label5.Tag = cells[4];
-            this.label5.Text = cells[4].Value.ToString();
             this.label6.Tag = cells[5];
-            this.label6.Text = cells[5].Value.ToString();
             this.label7.Tag = cells[6];
-            this.label7.Text = cells[6].Value.ToString();
             this.label8.Tag = cells[7];
-            this.label8.Text = cells[7].Value.ToString();
             this.label9.Tag = cells[8];
-            this.label9.Text = cells[8].Value.ToString();
 
             this.viewModel.PropertyChanged += this.ViewModel_PropertyChanged;
 
@@ -58,6 +49,7 @@ namespace Sudoku
                 cell.PropertyChanged += this.Cell_PropertyChanged;
             }
 
+            this.UpdateCells();
             this.UpdateSelection();
             this.UpdateInvalidCells();
         }
@@ -66,18 +58,7 @@ namespace Sudoku
         {
             foreach (var lbl in this.tableLayoutPanel1.Controls.OfType<Label>())
             {
-                if (lbl.Tag == this.viewModel.SelectedCell)
-                {
-                    lbl.BackColor = SystemColors.GradientInactiveCaption;
-                }
-                else if(Properties.Settings.Default.HighlightSelection && lbl.Tag is SudokuCell cell && (cell.Row == this.viewModel.SelectedCell.Row || cell.Col == this.viewModel.SelectedCell.Col))
-                {
-                    lbl.BackColor = SystemColors.Info;
-                }
-                else
-                {
-                    lbl.BackColor = SystemColors.Window;
-                }
+                lbl.BackColor = this.viewModel.GetCellBackColor(lbl.Tag as SudokuCell);
             }
         }
 
@@ -85,13 +66,17 @@ namespace Sudoku
         {
             foreach (var lbl in this.tableLayoutPanel1.Controls.OfType<Label>())
             {
-                if (Properties.Settings.Default.HighlightConflicts && this.viewModel.InvalidCells.Contains(lbl.Tag))
+                lbl.ForeColor = this.viewModel.GetCellForeColor(lbl.Tag as SudokuCell);
+            }
+        }
+
+        private void UpdateCells()
+        {
+            foreach (var lbl in this.tableLayoutPanel1.Controls.OfType<Label>())
+            {
+                if (lbl.Tag is SudokuCell cell)
                 {
-                    lbl.ForeColor = Color.Firebrick;
-                }
-                else
-                {
-                    lbl.ForeColor = SystemColors.ControlText;
+                    lbl.Text = cell.Value.ToString();
                 }
             }
         }
@@ -109,6 +94,10 @@ namespace Sudoku
             else if(e.PropertyName == nameof(this.viewModel.InvalidCells))
             {
                 this.UpdateInvalidCells();
+            }
+            else if (string.IsNullOrEmpty(e.PropertyName))
+            {
+                this.UpdateCells();
             }
         }
 

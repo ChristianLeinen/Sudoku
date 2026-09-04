@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,21 +40,59 @@ namespace Sudoku
         #region Ctor/dtor
         public SudokuViewModel()
         {
+            this.Board.BeginUpdate();
             this.Board.Init(Program.SEED);
+            this.Board.EndUpdate();
             this.SelectedCell = this.Board.GetCell(0, 0);
 
             this.Board.CellValueChanged += Board_CellValueChanged;
-            this.SelectedCell.Value = '9';
+//            this.SelectedCell.Value = '9';
         }
 
         private void Board_CellValueChanged(object sender, CellValueChangedEventArgs e)
         {
+            if (e.Cell == null)
+            {
+                // trigger update for all cells
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+            }
+
+            // get invalid cells and trigger update
             this.InvalidCells = this.Board.GetInvalidCells().ToArray();
             this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.InvalidCells)));
         }
         #endregion
 
         #region Public methods
+        public Color GetCellForeColor(SudokuCell cell)
+        {
+            if (Properties.Settings.Default.HighlightConflicts && this.InvalidCells.Contains(cell))
+            {
+                return Color.Firebrick;
+            }
+            else
+            {
+                return SystemColors.ControlText;
+            }
+        }
+
+        public Color GetCellBackColor(SudokuCell cell)
+        {
+            if (cell == this.SelectedCell)
+            {
+                return SystemColors.GradientInactiveCaption;
+            }
+            else if (Properties.Settings.Default.HighlightSelection && (cell?.Row == this.SelectedCell.Row || cell?.Col == this.SelectedCell.Col))
+            {
+                return SystemColors.Info;
+            }
+            /// TODO: implement read-only cells (i.e. those, that were generated)
+            else
+            {
+                return SystemColors.Window;
+            }
+        }
+
         public void MoveSelection(Keys direction)
         {
             switch (direction)

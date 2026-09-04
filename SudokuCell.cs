@@ -29,15 +29,23 @@ namespace Sudoku
                 if (this.value != value)
                 {
                     this.value = value;
-                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Value)));
+                    this.OnPropertyChanged(nameof(this.Value));
                 }
             }
         }
         public bool IsEmpty => this.value == EMPTY;
+        public bool IsUpdating { get; set; }
         #endregion
 
         #region Events
         public event PropertyChangedEventHandler PropertyChanged;
+        private void OnPropertyChanged(string propertyName)
+        {
+            if (!this.IsUpdating && this.PropertyChanged != null)
+            {
+                this.PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
         #endregion
 
         #region Ctor/dtor
