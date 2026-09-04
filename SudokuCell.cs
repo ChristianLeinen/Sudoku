@@ -9,6 +9,10 @@ namespace Sudoku
 {
     public class SudokuCell : INotifyPropertyChanged
     {
+        #region Constants
+        public const char EMPTY = char.MinValue;
+        #endregion
+
         #region Fields
         private char value;
         #endregion
@@ -29,6 +33,7 @@ namespace Sudoku
                 }
             }
         }
+        public bool IsEmpty => this.value == EMPTY;
         #endregion
 
         #region Events

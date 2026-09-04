@@ -21,7 +21,7 @@ namespace Sudoku
                 for (int tile = 0; tile < SudokuBoard.SIZE; ++tile)
                 {
                     // get all valid positions for this number
-                    var cells = board.GetTile(tile).Where(item => item.Value == SudokuBoard.EMPTY).ToList();
+                    var cells = board.GetTile(tile).Where(item => item.Value == SudokuCell.EMPTY).ToList();
 
                     // filter invalid rows
                     var rows = cells.Select(item => item.Row).Distinct().ToList();

@@ -201,7 +201,7 @@ namespace Sudoku
                 case Keys.Space:
                 case Keys.Back:
                 case Keys.Delete:
-                    this.viewModel.SelectedCell.Value = SudokuBoard.EMPTY;
+                    this.viewModel.SelectedCell.Value = SudokuCell.EMPTY;
                     break;
             }
         }

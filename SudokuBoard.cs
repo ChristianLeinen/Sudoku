@@ -25,7 +25,6 @@ namespace Sudoku
     {
         #region constants
         public const int SIZE = 9;
-        public const char EMPTY = char.MinValue;
         #endregion
 
         #region Fields
@@ -113,26 +112,26 @@ namespace Sudoku
 
         public IEnumerable<SudokuCell> GetTile(int tile) => this.cells.Where(cell => cell.Tile == tile);
 
-        public IEnumerable<SudokuCell> GetEmptyCells() => this.cells.Where(cell => cell.Value == EMPTY);
+        public IEnumerable<SudokuCell> GetEmptyCells() => this.cells.Where(cell => cell.IsEmpty);
 
         public IEnumerable<SudokuCell> GetInvalidCells()
         {
             // group all non-empty cells by row and value
             // select those, that have more than one occurence
             var invalidRows = from cell in this.cells
-                              where cell.Value != EMPTY
+                              where !cell.IsEmpty
                               group cell by new { cell.Row, cell.Value } into g
                               where g.Count() > 1
                               select g;
 
             var invalidColumns = from cell in this.cells
-                                 where cell.Value != EMPTY
+                                 where !cell.IsEmpty
                                  group cell by new { cell.Col, cell.Value } into g
                                  where g.Count() > 1
                                  select g;
 
             var invalidTiles = from cell in this.cells
-                               where cell.Value != EMPTY
+                               where !cell.IsEmpty
                                group cell by new { cell.Tile, cell.Value } into g
                                where g.Count() > 1
                                select g;
@@ -142,7 +141,7 @@ namespace Sudoku
         #endregion
 
         #region Public check methods
-        public bool IsComplete => this.cells.All(cell => cell.Value != EMPTY);
+        public bool IsComplete => this.cells.All(cell => !cell.IsEmpty);
 
         /// <summary>
         /// Checks if the given set of values (either a row, column or tile) is valid, i.e. does not contain duplicates (other than empty).
@@ -151,16 +150,23 @@ namespace Sudoku
         /// <returns>True if the given set of values does not contain duplicates (other than empty).</returns>
         public static bool IsValid(IEnumerable<char> values)
         {
-            var valueSeen = new bool[SIZE];
-            foreach (var item in values)
-            {
-                if (item == EMPTY)
-                    continue;
-                else if (valueSeen[item - '1'])
-                    return false;
-                valueSeen[item - '1'] = true;
-            }
-            return true;
+            var duplicates = from cell in values
+                             where cell != SudokuCell.EMPTY
+                             group cell by cell into g
+                             where g.Count() > 1
+                             select g.Key;
+            return duplicates.Any();
+
+            //var valueSeen = new bool[SIZE];
+            //foreach (var item in values)
+            //{
+            //    if (item == SudokuCell.EMPTY)
+            //        continue;
+            //    else if (valueSeen[item - '1'])
+            //        return false;
+            //    valueSeen[item - '1'] = true;
+            //}
+            //return true;
         }
 
         /// <summary>
@@ -169,30 +175,32 @@ namespace Sudoku
         /// <returns>True, if the board ist valid, i.e. no row, column or tile contains duplicate values (other than empty).</returns>
         public bool IsValid()
         {
-            // check rows
-            for (var row = 0; row < SIZE; ++row)
-            {
-                var rowVals = this.GetRow(row).Select(cell => cell.Value);
-                if (!IsValid(rowVals))
-                    return false;
-            }
+            return this.GetInvalidCells().Any();
 
-            // check columns
-            for (var col = 0; col < SIZE; ++col)
-            {
-                var colVals = this.GetColumn(col).Select(cell => cell.Value);
-                if (!IsValid(colVals))
-                    return false;
-            }
+            //// check rows
+            //for (var row = 0; row < SIZE; ++row)
+            //{
+            //    var rowVals = this.GetRow(row).Select(cell => cell.Value);
+            //    if (!IsValid(rowVals))
+            //        return false;
+            //}
 
-            // check squares
-            for (var tile = 0; tile < SIZE; ++tile)
-            {
-                var tileVals = this.GetTile(tile).Select(cell => cell.Value);
-                if (!IsValid(tileVals))
-                    return false;
-            }
-            return true;
+            //// check columns
+            //for (var col = 0; col < SIZE; ++col)
+            //{
+            //    var colVals = this.GetColumn(col).Select(cell => cell.Value);
+            //    if (!IsValid(colVals))
+            //        return false;
+            //}
+
+            //// check squares
+            //for (var tile = 0; tile < SIZE; ++tile)
+            //{
+            //    var tileVals = this.GetTile(tile).Select(cell => cell.Value);
+            //    if (!IsValid(tileVals))
+            //        return false;
+            //}
+            //return true;
         }
         #endregion
     }
